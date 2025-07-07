@@ -21,11 +21,22 @@
             var format = container.Pointer;
             AVCodec* codec = null;
 
-            var index = ffmpeg.av_find_best_stream(format, stream->codecpar->codec_type, stream->index, -1, &codec, 0);
-            index.IfError(ffmpeg.AVERROR_DECODER_NOT_FOUND, "Cannot find a codec for the specified stream.");
-            if (index < 0)
+            if (!string.IsNullOrEmpty(options.CodecName))
             {
-                return null;
+                codec = ffmpeg.avcodec_find_decoder_by_name(options.CodecName);
+                if (codec == null)
+                {
+                    throw new FFmpegException($"Cannot find a codec with the name '{options.CodecName}'.");
+                }
+            }
+            else
+            {
+                var index = ffmpeg.av_find_best_stream(format, stream->codecpar->codec_type, stream->index, -1, &codec, 0);
+                index.IfError(ffmpeg.AVERROR_DECODER_NOT_FOUND, "Cannot find a codec for the specified stream.");
+                if (index < 0)
+                {
+                    return null;
+                }
             }
 
             var codecContext = ffmpeg.avcodec_alloc_context3(codec);
