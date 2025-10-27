@@ -21,12 +21,20 @@
             var format = container.Pointer;
             AVCodec* codec = null;
 
-            if (!string.IsNullOrEmpty(options.CodecName))
+            if (stream->codecpar->codec_type == AVMediaType.AVMEDIA_TYPE_VIDEO && !string.IsNullOrEmpty(options.VideoCodecName))
             {
-                codec = ffmpeg.avcodec_find_decoder_by_name(options.CodecName);
+                codec = ffmpeg.avcodec_find_decoder_by_name(options.VideoCodecName);
                 if (codec == null)
                 {
-                    throw new FFmpegException($"Cannot find a codec with the name '{options.CodecName}'.");
+                    throw new FFmpegException($"Cannot find a codec with the name '{options.VideoCodecName}'.");
+                }
+            }
+            else if (stream->codecpar->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO && !string.IsNullOrEmpty(options.AudioCodecName))
+            {
+                codec = ffmpeg.avcodec_find_decoder_by_name(options.AudioCodecName);
+                if (codec == null)
+                {
+                    throw new FFmpegException($"Cannot find a codec with the name '{options.AudioCodecName}'.");
                 }
             }
             else
