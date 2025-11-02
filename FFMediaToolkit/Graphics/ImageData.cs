@@ -160,10 +160,16 @@
             {
                 case ImagePixelFormat.Bgr24:
                     return 24;
+                case ImagePixelFormat.Bgr48:
+                    return 48;
                 case ImagePixelFormat.Bgra32:
                     return 32;
+                case ImagePixelFormat.Bgra64:
+                    return 64;
                 case ImagePixelFormat.Rgb24:
                     return 24;
+                case ImagePixelFormat.Rgb48:
+                    return 48;
                 case ImagePixelFormat.Rgba32:
                     return 32;
                 case ImagePixelFormat.Argb32:

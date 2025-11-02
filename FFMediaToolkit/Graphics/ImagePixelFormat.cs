@@ -13,14 +13,29 @@
         Bgr24 = AVPixelFormat.AV_PIX_FMT_BGR24,
 
         /// <summary>
+        /// Represents a BGR 48bpp bitmap pixel format.
+        /// </summary>
+        Bgr48 = AVPixelFormat.AV_PIX_FMT_BGR48LE,
+
+        /// <summary>
         /// Represents a BGRA(with alpha channel) 32bpp bitmap pixel format.
         /// </summary>
         Bgra32 = AVPixelFormat.AV_PIX_FMT_BGRA,
 
         /// <summary>
+        /// Represents a BGRA(with alpha channel) 64bpp bitmap pixel format.
+        /// </summary>
+        Bgra64 = AVPixelFormat.AV_PIX_FMT_BGRA64LE,
+
+        /// <summary>
         /// Represents a RGB 24bpp bitmap pixel format.
         /// </summary>
         Rgb24 = AVPixelFormat.AV_PIX_FMT_RGB24,
+
+        /// <summary>
+        /// Represents a RGB 48bpp bitmap pixel format.
+        /// </summary>
+        Rgb48 = AVPixelFormat.AV_PIX_FMT_RGB48LE,
 
         /// <summary>
         /// Represents a RGBA(with alpha channel) 32bpp bitmap pixel format.
