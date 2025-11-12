@@ -39,7 +39,7 @@
         /// <param name="destinationFrame">The <see cref="AVFrame"/> to override.</param>
         internal void FillAVFrame(ImageData bitmap, VideoFrame destinationFrame)
         {
-            UpdateContext(bitmap.ImageSize, (AVPixelFormat)bitmap.PixelFormat);
+            UpdateContext(bitmap.ImageSize, (AVPixelFormat)bitmap.PixelFormat, null);
 
             var requiredBufferLength = (bitmap.Stride * bitmap.ImageSize.Height) + BufferPaddingSize;
             var shouldUseTmpBuffer = bitmap.ImageSize != destinationSize && bitmap.Data.Length < requiredBufferLength;
@@ -71,7 +71,7 @@
         /// <param name="stride">Size of the single bitmap row.</param>
         internal void AVFrameToBitmap(VideoFrame videoFrame, byte* destination, int stride)
         {
-            UpdateContext(videoFrame.Layout, videoFrame.PixelFormat);
+            UpdateContext(videoFrame.Layout, videoFrame.PixelFormat, videoFrame);
 
             var data = new byte*[4] { destination, null, null, null };
             var linesize = new int[4] { stride, 0, 0, 0 };
@@ -81,7 +81,7 @@
         /// <inheritdoc/>
         protected override void OnDisposing() => ffmpeg.sws_freeContext(Pointer);
 
-        private void UpdateContext(Size sourceSize, AVPixelFormat sourceFormat)
+        private void UpdateContext(Size sourceSize, AVPixelFormat sourceFormat, VideoFrame frame)
         {
             if (sourceSize != lastSourceSize || sourceFormat != lastSourcePixelFormat)
             {
@@ -89,6 +89,7 @@
 
                 var scaleMode = sourceSize == destinationSize ? ffmpeg.SWS_POINT : ffmpeg.SWS_BICUBIC;
                 var swsContext = ffmpeg.sws_getContext(sourceSize.Width, sourceSize.Height, sourceFormat, destinationSize.Width, destinationSize.Height, destinationFormat, scaleMode, null, null, null);
+                frame?.SetSwsContextColorSpace(swsContext);
 
                 if (swsContext == null)
                 {

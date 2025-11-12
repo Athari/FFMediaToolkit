@@ -101,5 +101,89 @@
 
             base.Update(newFrame);
         }
+
+        /// <summary>
+        /// Set up sws context color space based on frame metadata.
+        /// </summary>
+        /// <param name="swsContext">Context to set up.</param>
+        internal void SetSwsContextColorSpace(SwsContext* swsContext)
+        {
+            // var trc = Pointer->color_trc;
+            var cs = Pointer->colorspace;
+            var primaries = Pointer->color_primaries;
+            var range = Pointer->color_range;
+
+            int swsCs = ffmpeg.SWS_CS_DEFAULT;
+
+            if (primaries != AVColorPrimaries.AVCOL_PRI_UNSPECIFIED)
+            {
+                swsCs = AVColorPrimariesToSwsColorSpace(primaries) ?? swsCs;
+            }
+
+            if (cs != AVColorSpace.AVCOL_SPC_UNSPECIFIED && swsCs == ffmpeg.SWS_CS_DEFAULT)
+            {
+                swsCs = AVColorSpaceToSwsColorSpace(cs) ?? swsCs;
+            }
+
+            var srcCoeffs = GetSwsCoefficients(swsCs);
+            var dstCoeffs = GetSwsCoefficients(ffmpeg.SWS_CS_DEFAULT);
+            var srcRange = range == AVColorRange.AVCOL_RANGE_JPEG ? 1 : 0;
+            var dstRange = 1;
+
+            ffmpeg.sws_setColorspaceDetails(swsContext, srcCoeffs, srcRange, dstCoeffs, dstRange, brightness: 0, contrast: 1 << 16, saturation: 1 << 16);
+        }
+
+        private static int? AVColorPrimariesToSwsColorSpace(AVColorPrimaries cs)
+        {
+            switch (cs)
+            {
+                case AVColorPrimaries.AVCOL_PRI_BT709:
+                    return ffmpeg.SWS_CS_ITU709;
+                case AVColorPrimaries.AVCOL_PRI_BT470BG:
+                case AVColorPrimaries.AVCOL_PRI_BT470M:
+                    return ffmpeg.SWS_CS_ITU601;
+                case AVColorPrimaries.AVCOL_PRI_SMPTE170M:
+                    return ffmpeg.SWS_CS_SMPTE170M;
+                case AVColorPrimaries.AVCOL_PRI_SMPTE240M:
+                    return ffmpeg.SWS_CS_SMPTE240M;
+                case AVColorPrimaries.AVCOL_PRI_BT2020:
+                    return ffmpeg.SWS_CS_BT2020;
+                default:
+                    return ffmpeg.SWS_CS_DEFAULT;
+            }
+        }
+
+        private static int? AVColorSpaceToSwsColorSpace(AVColorSpace cs)
+        {
+            switch (cs)
+            {
+                case AVColorSpace.AVCOL_SPC_BT709:
+                    return ffmpeg.SWS_CS_ITU709;
+                case AVColorSpace.AVCOL_SPC_FCC:
+                    return ffmpeg.SWS_CS_FCC;
+                case AVColorSpace.AVCOL_SPC_BT470BG:
+                    return ffmpeg.SWS_CS_ITU601;
+                case AVColorSpace.AVCOL_SPC_SMPTE170M:
+                    return ffmpeg.SWS_CS_SMPTE170M;
+                case AVColorSpace.AVCOL_SPC_SMPTE240M:
+                    return ffmpeg.SWS_CS_SMPTE240M;
+                case AVColorSpace.AVCOL_SPC_BT2020_NCL:
+                case AVColorSpace.AVCOL_SPC_BT2020_CL:
+                    return ffmpeg.SWS_CS_BT2020;
+                default:
+                    return ffmpeg.SWS_CS_DEFAULT;
+            }
+        }
+
+        private static int_array4 GetSwsCoefficients(int colorspace)
+        {
+            var coeffs = ffmpeg.sws_getCoefficients(colorspace);
+            var vector = default(int_array4);
+            vector[0] = coeffs[0];
+            vector[1] = coeffs[1];
+            vector[2] = coeffs[2];
+            vector[3] = coeffs[3];
+            return vector;
+        }
     }
 }
