@@ -108,51 +108,31 @@
         /// <param name="swsContext">Context to set up.</param>
         internal void SetSwsContextColorSpace(SwsContext* swsContext)
         {
+            const int FixedPointZero = 0;
+            const int FixedPointOne = 1 << 16;
+            const int ColorRangeJpegPC = 1;
+            const int ColorRangeMpegTV = 0;
+
             // var trc = Pointer->color_trc;
+            // var primaries = Pointer->color_primaries;
             var cs = Pointer->colorspace;
-            var primaries = Pointer->color_primaries;
             var range = Pointer->color_range;
 
             int swsCs = ffmpeg.SWS_CS_DEFAULT;
-
-            if (primaries != AVColorPrimaries.AVCOL_PRI_UNSPECIFIED)
-            {
-                swsCs = AVColorPrimariesToSwsColorSpace(primaries) ?? swsCs;
-            }
-
-            if (cs != AVColorSpace.AVCOL_SPC_UNSPECIFIED && swsCs == ffmpeg.SWS_CS_DEFAULT)
+            if (cs != AVColorSpace.AVCOL_SPC_UNSPECIFIED)
             {
                 swsCs = AVColorSpaceToSwsColorSpace(cs) ?? swsCs;
             }
 
             var srcCoeffs = GetSwsCoefficients(swsCs);
             var dstCoeffs = GetSwsCoefficients(ffmpeg.SWS_CS_DEFAULT);
-            var srcRange = range == AVColorRange.AVCOL_RANGE_JPEG ? 1 : 0;
-            var dstRange = 1;
+            var srcRange = range == AVColorRange.AVCOL_RANGE_JPEG ? ColorRangeJpegPC : ColorRangeMpegTV;
+            var dstRange = ColorRangeJpegPC;
 
-            ffmpeg.sws_setColorspaceDetails(swsContext, srcCoeffs, srcRange, dstCoeffs, dstRange, brightness: 0, contrast: 1 << 16, saturation: 1 << 16);
+            ffmpeg.sws_setColorspaceDetails(swsContext, srcCoeffs, srcRange, dstCoeffs, dstRange, brightness: FixedPointZero, contrast: FixedPointOne, saturation: FixedPointOne);
         }
 
-        private static int? AVColorPrimariesToSwsColorSpace(AVColorPrimaries cs)
-        {
-            switch (cs)
-            {
-                case AVColorPrimaries.AVCOL_PRI_BT709:
-                    return ffmpeg.SWS_CS_ITU709;
-                case AVColorPrimaries.AVCOL_PRI_BT470BG:
-                case AVColorPrimaries.AVCOL_PRI_BT470M:
-                    return ffmpeg.SWS_CS_ITU601;
-                case AVColorPrimaries.AVCOL_PRI_SMPTE170M:
-                    return ffmpeg.SWS_CS_SMPTE170M;
-                case AVColorPrimaries.AVCOL_PRI_SMPTE240M:
-                    return ffmpeg.SWS_CS_SMPTE240M;
-                case AVColorPrimaries.AVCOL_PRI_BT2020:
-                    return ffmpeg.SWS_CS_BT2020;
-                default:
-                    return ffmpeg.SWS_CS_DEFAULT;
-            }
-        }
-
+        // https://github.com/FFmpeg/FFmpeg/blob/6cdd2cbe323e04cb4bf88bea50c32aad60cba26e/libavfilter/vf_colormatrix.c#L424-L431
         private static int? AVColorSpaceToSwsColorSpace(AVColorSpace cs)
         {
             switch (cs)
@@ -161,12 +141,11 @@
                     return ffmpeg.SWS_CS_ITU709;
                 case AVColorSpace.AVCOL_SPC_FCC:
                     return ffmpeg.SWS_CS_FCC;
-                case AVColorSpace.AVCOL_SPC_BT470BG:
-                    return ffmpeg.SWS_CS_ITU601;
-                case AVColorSpace.AVCOL_SPC_SMPTE170M:
-                    return ffmpeg.SWS_CS_SMPTE170M;
                 case AVColorSpace.AVCOL_SPC_SMPTE240M:
                     return ffmpeg.SWS_CS_SMPTE240M;
+                case AVColorSpace.AVCOL_SPC_BT470BG:
+                case AVColorSpace.AVCOL_SPC_SMPTE170M:
+                    return ffmpeg.SWS_CS_ITU601;
                 case AVColorSpace.AVCOL_SPC_BT2020_NCL:
                 case AVColorSpace.AVCOL_SPC_BT2020_CL:
                     return ffmpeg.SWS_CS_BT2020;
